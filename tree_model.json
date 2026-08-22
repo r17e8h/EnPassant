@@ -1,0 +1,49 @@
+{
+  "type": "split",
+  "feature_index": 0,
+  "threshold": 175185.5,
+  "left": {
+    "type": "split",
+    "feature_index": 0,
+    "threshold": 49865.5,
+    "left": {
+      "type": "split",
+      "feature_index": 0,
+      "threshold": 49864.5,
+      "left": {
+        "type": "split",
+        "feature_index": 0,
+        "threshold": 49407.5,
+        "left": {
+          "type": "leaf",
+          "fraud_probability": 0.0102
+        },
+        "right": {
+          "type": "leaf",
+          "fraud_probability": 0.0165
+        }
+      },
+      "right": {
+        "type": "split",
+        "feature_index": 1,
+        "threshold": 7.0,
+        "left": {
+          "type": "leaf",
+          "fraud_probability": 0.0
+        },
+        "right": {
+          "type": "leaf",
+          "fraud_probability": 1.0
+        }
+      }
+    },
+    "right": {
+      "type": "leaf",
+      "fraud_probability": 0.0
+    }
+  },
+  "right": {
+    "type": "leaf",
+    "fraud_probability": 1.0
+  }
+}
