@@ -6,7 +6,7 @@ export const useEnPassant = () => {
   useEffect(() => {
     const initWasm = async () => {
       try {
-        const response = await fetch("/enpassant.js");
+        const response = await fetch("/EnPassant/enpassant.js");
         const scriptText = await response.text();
 
         const script = document.createElement("script");
