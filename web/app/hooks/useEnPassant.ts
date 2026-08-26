@@ -14,9 +14,13 @@ export const useEnPassant = () => {
         document.body.appendChild(script);
 
         console.log("WASM Script Injected. Booting Tensor Engine...");
-
         const Module = await (window as any).createEnpassantModule({
-          locateFile: (path: string) => "/EnPassant/" + path,
+          locateFile: (path: string) => {
+            if (path.endsWith(".wasm")) {
+              return "/EnPassant/" + path + "?v=" + Date.now();
+            }
+            return path;
+          },
         });
 
         (window as any).enpassantEngineInstance = Module;
