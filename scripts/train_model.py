@@ -12,19 +12,22 @@ X = np.zeros((num_samples, 3), dtype=np.float32)
 y = np.zeros((num_samples, 1), dtype=np.float32)
 
 for i in range(num_samples):
-    is_fraud = np.random.rand() > 0.85
-
-    if is_fraud:
+    r = np.random.rand()
+    if r > 0.85:
         X[i][0] = np.random.uniform(0.5, 1.0)
         X[i][1] = np.random.uniform(2.0, 4.0)
         X[i][2] = 1.0
         y[i][0] = 1.0
+    elif r > 0.75:
+        X[i][0] = np.random.uniform(0.5, 1.0)
+        X[i][1] = np.random.uniform(2.0, 4.0)
+        X[i][2] = 0.0
+        y[i][0] = 0.0
     else:
         X[i][0] = np.random.uniform(0.01, 0.4)
         X[i][1] = np.random.uniform(6.0, 22.0)
         X[i][2] = 0.0
         y[i][0] = 0.0
-
 X_tensor = torch.tensor(X)
 y_tensor = torch.tensor(y)
 
