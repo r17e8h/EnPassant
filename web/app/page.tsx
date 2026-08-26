@@ -138,7 +138,6 @@ export default function Home() {
 
         const rawLatency = endTime - startTime;
         setLatency(rawLatency < 1 ? "< 1.00" : rawLatency.toFixed(2));
-
         const timestamp = new Date().toLocaleTimeString("en-US", {
           hour12: false,
           fractionalSecondDigits: 1,
@@ -157,11 +156,11 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isStreaming, isReady]);
 
-  if (!mounted) return <main className="min-h-screen bg-[#F2EFE5]" />;
+  if (!mounted) return <main className="h-screen bg-[#F2EFE5]" />;
 
   return (
-    <main className="min-h-screen bg-[#F2EFE5] text-[#3A352F] font-sans p-4 lg:p-6 selection:bg-[#D8D3C4]">
-      <header className="flex flex-col lg:flex-row justify-between items-stretch mb-6 bg-[#F9F8F6] border border-[#D8D3C4] shadow-sm rounded-md font-mono text-xs overflow-hidden">
+    <main className="h-screen w-full overflow-hidden flex flex-col bg-[#F2EFE5] text-[#3A352F] font-sans p-4 lg:p-6 selection:bg-[#D8D3C4]">
+      <header className="flex-none flex flex-col lg:flex-row justify-between items-stretch mb-6 bg-[#F9F8F6] border border-[#D8D3C4] shadow-sm rounded-md font-mono text-xs overflow-hidden">
         <div className="flex items-center bg-[#EAE6DB] px-5 py-4 border-b lg:border-b-0 lg:border-r border-[#D8D3C4] w-full lg:w-auto">
           <Terminal size={16} className="mr-2 text-[#C65342]" />
           <span className="font-bold tracking-widest uppercase text-[#3A352F] text-sm">
@@ -228,15 +227,15 @@ export default function Home() {
           </button>
         </div>
       </header>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-175">
-        <section className="lg:col-span-8 flex flex-col gap-6">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+        <section className="lg:col-span-8 flex flex-col gap-6 overflow-hidden min-h-0">
           {quarantine.length > 0 && (
-            <div className="bg-[#F6E1DF] border border-[#C65342]/40 rounded-md shadow-sm flex flex-col overflow-hidden">
-              <div className="bg-[#C65342]/10 border-b border-[#C65342]/20 px-4 py-2 flex items-center gap-2 font-mono text-[11px] font-bold text-[#C65342] tracking-widest uppercase">
+            <div className="flex-none max-h-[40%] bg-[#F6E1DF] border border-[#C65342]/40 rounded-md shadow-sm flex flex-col overflow-hidden">
+              <div className="flex-none bg-[#C65342]/10 border-b border-[#C65342]/20 px-4 py-2 flex items-center gap-2 font-mono text-[11px] font-bold text-[#C65342] tracking-widest uppercase">
                 <ShieldAlert size={14} />
                 Quarantine Buffer (Intercepted Threats)
               </div>
-              <div className="p-2 flex flex-col gap-1 overflow-x-auto">
+              <div className="p-2 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#C65342]/30 [&::-webkit-scrollbar-thumb]:rounded-full">
                 <table className="w-full text-left font-sans text-sm whitespace-nowrap">
                   <tbody>
                     {quarantine.map((item, i) => (
@@ -265,15 +264,15 @@ export default function Home() {
               </div>
             </div>
           )}
-          <div className="bg-[#F9F8F6] border border-[#D8D3C4] rounded-md flex-1 flex flex-col shadow-sm overflow-hidden">
-            <div className="bg-[#EAE6DB] border-b border-[#D8D3C4] px-4 py-2 flex items-center justify-between font-mono text-[11px] font-bold text-[#7A7265] tracking-widest uppercase">
+          <div className="bg-[#F9F8F6] border border-[#D8D3C4] rounded-md flex-1 flex flex-col shadow-sm overflow-hidden min-h-0">
+            <div className="flex-none bg-[#EAE6DB] border-b border-[#D8D3C4] px-4 py-2 flex items-center justify-between font-mono text-[11px] font-bold text-[#7A7265] tracking-widest uppercase">
               <span>Live Transaction Stream</span>
               <span>1.25 TX/S</span>
             </div>
 
-            <div className="flex-1 overflow-auto p-2">
+            <div className="flex-1 overflow-y-auto p-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D8D3C4] [&::-webkit-scrollbar-thumb]:rounded-full">
               <table className="w-full text-left font-sans text-sm whitespace-nowrap">
-                <thead className="text-[#9C9482] font-mono text-[10px] border-b border-[#D8D3C4]">
+                <thead className="text-[#9C9482] font-mono text-[10px] border-b border-[#D8D3C4] sticky top-0 bg-[#F9F8F6]">
                   <tr>
                     <th className="px-3 py-3 font-semibold tracking-wider">
                       TIME
@@ -343,13 +342,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="lg:col-span-4 bg-[#F9F8F6] border border-[#D8D3C4] rounded-md flex flex-col shadow-sm overflow-hidden h-full">
-          <div className="bg-[#EAE6DB] border-b border-[#D8D3C4] px-4 py-2 flex items-center gap-2 font-mono text-[11px] font-bold text-[#7A7265] tracking-widest uppercase">
+        <section className="lg:col-span-4 bg-[#F9F8F6] border border-[#D8D3C4] rounded-md flex flex-col shadow-sm overflow-hidden min-h-0">
+          <div className="flex-none bg-[#EAE6DB] border-b border-[#D8D3C4] px-4 py-2 flex items-center gap-2 font-mono text-[11px] font-bold text-[#7A7265] tracking-widest uppercase">
             <FileJson size={14} />
             Deep Packet Inspector
           </div>
 
-          <div className="p-5 flex-1 flex flex-col overflow-y-auto">
+          <div className="flex-1 p-5 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D8D3C4] [&::-webkit-scrollbar-thumb]:rounded-full">
             {!inspectedTx ? (
               <div className="h-full flex items-center justify-center text-[#9C9482] text-sm italic">
                 Select a transaction to inspect
@@ -467,7 +466,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-[#3A352F] p-3 border-t border-[#D8D3C4] flex items-center font-mono text-xs mt-auto">
+          <div className="flex-none bg-[#3A352F] p-3 border-t border-[#D8D3C4] flex items-center font-mono text-xs">
             <span className="text-[#C65342] font-bold mr-3 shrink-0">
               ADMIN {">"}
             </span>
