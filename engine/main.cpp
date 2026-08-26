@@ -1,155 +1,54 @@
-#include "nlohmann/json.hpp"
+#include "weights.h"
 #include <algorithm>
-#include <fstream>
-#include <iostream>
+#include <cmath>
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
-using json = nlohmann::json;
+using namespace emscripten;
 
-struct Transaction {
-  std::string transaction_id;
-  std::string user_id;
-  uint64_t amount;
-  uint64_t timestamp;
-  int hour_of_day;
-  std::string location;
-  std::string device_id;
-  int is_fraud;
-};
+inline float relu(float x) { return x > 0 ? x : 0; }
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Transaction, transaction_id, user_id, amount,
-                                   timestamp, hour_of_day, location, device_id,
-                                   is_fraud)
+inline float sigmoid(float x) { return 1.0f / (1.0f + std::exp(-x)); }
 
-class RiskEngine {
-private:
-  std::unordered_map<std::string, std::vector<uint64_t>> user_velocity;
-  std::unordered_map<std::string, std::unordered_set<std::string>> device_users;
-  std::unordered_map<std::string, std::pair<std::string, uint64_t>>
-      user_location;
-  json ai_model;
+float run_inference(float amount, float hour, float device_risk) {
+  float input[3] = {amount, hour, device_risk};
+  float hidden[8] = {0};
 
-  const size_t MAX_TX_COUNT = 4;
-  const uint64_t VELOCITY_WINDOW = 60;
-  const uint64_t IMPOSSIBLE_TRAVEL_WINDOW = 3600;
-
-  float runInference(const json &node, const Transaction &tx) {
-    if (node["type"] == "leaf") {
-      return node["fraud_probability"];
+  for (int i = 0; i < 8; i++) {
+    hidden[i] = B1[i];
+    for (int j = 0; j < 3; j++) {
+      hidden[i] += W1[i][j] * input[j];
     }
-
-    float feature_value = (node["feature_index"] == 0)
-                              ? static_cast<float>(tx.amount)
-                              : static_cast<float>(tx.hour_of_day);
-
-    if (feature_value <= node["threshold"]) {
-      return runInference(node["left"], tx);
-    } else {
-      return runInference(node["right"], tx);
-    }
+    hidden[i] = relu(hidden[i]);
   }
 
-public:
-  void loadAIModel(const std::string &filepath) {
-    std::ifstream f(filepath);
-    if (!f.is_open()) {
-      std::cerr << "Failed to load AI model. Are you in the root directory?\n";
-      exit(1);
-    }
-    ai_model = json::parse(f);
-    std::cout << "Native AI Model Loaded Successfully.\n";
+  float output = B2[0];
+  for (int i = 0; i < 8; i++) {
+    output += W2[0][i] * hidden[i];
   }
 
-  int evaluateRisk(const Transaction &tx) {
-    int risk_score = 100;
+  return sigmoid(output); // returns probability (0.0 to 1.0)
+}
+val evaluate_transaction(val tx) {
+  float amount = tx["amount"].as<float>();
+  float hour = tx["hour_of_day"].as<float>();
+  std::string device_id = tx["device_id"].as<std::string>();
 
-    float ai_probability = runInference(ai_model, tx);
-    if (ai_probability > 0.5) {
-      risk_score -= static_cast<int>(ai_probability * 70);
-    }
+  float norm_amount = std::min(amount / 1000000.0f, 1.0f);
+  float device_risk = (device_id == "auth_FRAUD_NODE") ? 1.0f : 0.0f;
 
-    auto &velocity = user_velocity[tx.user_id];
-    velocity.push_back(tx.timestamp);
-    while (!velocity.empty() &&
-           (tx.timestamp - velocity.front() > VELOCITY_WINDOW)) {
-      velocity.erase(velocity.begin());
-    }
-    if (velocity.size() > MAX_TX_COUNT) {
-      risk_score -= 50;
-    }
+  float fraud_probability = run_inference(norm_amount, hour, device_risk);
 
-    device_users[tx.device_id].insert(tx.user_id);
-    if (device_users[tx.device_id].size() > 2) {
-      risk_score -= 60;
-    }
-    if (user_location.find(tx.user_id) != user_location.end()) {
-      auto last_loc = user_location[tx.user_id];
-      if (last_loc.first != tx.location &&
-          (tx.timestamp - last_loc.second < IMPOSSIBLE_TRAVEL_WINDOW)) {
-        risk_score -= 50;
-      }
-    }
-    user_location[tx.user_id] = {tx.location, tx.timestamp};
+  bool is_blocked = fraud_probability > 0.80f;
 
-    return std::max(0, risk_score);
-  }
-};
+  val result = val::object();
+  result.set("risk_score", fraud_probability * 100.0f);
+  result.set("is_blocked", is_blocked);
 
-int main() {
-  RiskEngine engine;
-  engine.loadAIModel("tree_model.json");
+  return result;
+}
 
-  std::string line;
-  int true_positives = 0, false_positives = 0, true_negatives = 0,
-      false_negatives = 0;
-  uint64_t total_false_positive_cost = 0;
-  const float AVG_PROFIT_MARGIN = 0.02f;
-
-  std::cout << "Running EnPassant Defense Evaluation on Test Set...\n";
-
-  while (std::getline(std::cin, line)) {
-    if (line.empty())
-      continue;
-    try {
-      json j = json::parse(line);
-      Transaction tx = j.get<Transaction>();
-
-      int score = engine.evaluateRisk(tx);
-      bool engine_blocked = (score < 70);
-
-      if (engine_blocked && tx.is_fraud == 1)
-        true_positives++;
-      else if (!engine_blocked && tx.is_fraud == 0)
-        true_negatives++;
-      else if (engine_blocked && tx.is_fraud == 0) {
-        false_positives++;
-        total_false_positive_cost += (tx.amount * AVG_PROFIT_MARGIN);
-      } else if (!engine_blocked && tx.is_fraud == 1)
-        false_negatives++;
-
-    } catch (std::exception &e) {
-      std::cerr << "Parse error: " << e.what() << '\n';
-    }
-  }
-
-  float precision =
-      (true_positives + false_positives == 0)
-          ? 0
-          : (float)true_positives / (true_positives + false_positives);
-  float recall =
-      (true_positives + false_negatives == 0)
-          ? 0
-          : (float)true_positives / (true_positives + false_negatives);
-
-  std::cout << "\n=== ENPASSANT SYSTEM METRICS ===\n";
-  std::cout << "Precision: " << (precision * 100) << "%\n";
-  std::cout << "Recall: " << (recall * 100) << "%\n";
-  std::cout << "False Positives (Legit Blocked): " << false_positives << "\n";
-  std::cout << "Financial Cost of False Positives: ₹"
-            << total_false_positive_cost << "\n";
-
-  return 0;
+EMSCRIPTEN_BINDINGS(enpassant_module) {
+  function("evaluateTransaction", &evaluate_transaction);
 }
